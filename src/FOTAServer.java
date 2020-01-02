@@ -92,14 +92,16 @@ class FileReceiver extends Thread{
             dataOutputStream.flush();
 
             if (isValid) {
-                dataOutputStream.write(0x02);
-                dataOutputStream.write('A');
-                for(int i = 0; fileName.charAt(i) != '.'; i++) {
-                    dataOutputStream.write(fileName.charAt(i));
+                int i;
+                byte[] response = new byte[20];
+                response[0] = 0x02;
+                for(i = 0; fileName.charAt(i) != '.'; i++) {
+                    response[i + 1] = (byte)fileName.charAt(i);
                     System.out.print(fileName.charAt(i));
                 }
-                dataOutputStream.write(0x0d);
-                dataOutputStream.write(0x03);
+                response[i + 1] = 0x0d;
+                response[i + 2] = 0x03;
+                dataOutputStream.write(response);
             } else {
                 // NAK
                 dataOutputStream.write(0x15);
