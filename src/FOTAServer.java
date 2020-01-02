@@ -12,9 +12,9 @@ public class FOTAServer {
 
         try{
             serverSocket = new ServerSocket(port);
-            System.out.println("서버 소켓 실행");
-            serverSocket.accept();
-            System.out.println("연결완료");
+            System.out.println("Launch Server");
+            socket = serverSocket.accept();
+            System.out.println("Connecting Completed");
 
             FileReceiver fl = new FileReceiver(socket);
             fl.start();
@@ -26,10 +26,9 @@ public class FOTAServer {
 }
 
 class FileReceiver extends Thread{
-    Socket socket;
-    InputStream inputStream;
-    OutputStream outputStream;
-    DataOutputStream dataOutputStream;
+    Socket socket = null;
+    InputStream inputStream = null;
+    DataOutputStream dataOutputStream = null;
 
     String dirPath = "C:\\Users\\lsmn0\\Documents\\LSM\\FOTAImage\\";
 //    String dirPath = "/home/pi/fotaserver";
@@ -43,7 +42,7 @@ class FileReceiver extends Thread{
     @Override
     public void run(){
         boolean isValid = false;
-        String data[] = new String[20];
+        StringBuffer data = new StringBuffer();
 
         /*디렉토리 목록 불러오기*/
         /*
@@ -63,26 +62,24 @@ class FileReceiver extends Thread{
         String fileName = null;
         if(tempFile.isFile()) {
             fileName = tempFile.getName();
-            System.out.println(fileName);
+            System.out.println("FileName: " + fileName);
         }
 
         try {
             // Request 받기
             inputStream = socket.getInputStream();
-            System.out.println("AAAA");
             byte[] receiveBuffer = new byte[100];
             inputStream.read(receiveBuffer);
-
-            System.out.println(receiveBuffer);
 
             // Request 파싱
             // Request 포맷 [0x02][DATA][0x0d][0x03]
             if(receiveBuffer[0] == 0x02) {
                 System.out.println("Valid Request");
                 for(int i = 1; receiveBuffer[i] != 0x03; i++) {
-                    data[i] = String.valueOf(receiveBuffer[i]);
+                    data.append((char)receiveBuffer[i]);
+                    System.out.format("%x ", receiveBuffer[i]);
                 }
-                System.out.println("Request Data: " + data);
+                System.out.println("\nRequest Data: " + data.toString());
                 isValid = true;
             } else {
                 System.out.println("Invalid Request");
@@ -91,13 +88,16 @@ class FileReceiver extends Thread{
 
             // Response
             // Response Valid: [0x02][DATA file name][0x0d][0x03] Invalid: 0x15
-            outputStream = socket.getOutputStream();
-            dataOutputStream = new DataOutputStream(outputStream);
+            dataOutputStream = new DataOutputStream(socket.getOutputStream());
+            dataOutputStream.flush();
 
             if (isValid) {
                 dataOutputStream.write(0x02);
-                for(int i = 0; fileName.charAt(i) != '\0'; i++)
+                dataOutputStream.write('A');
+                for(int i = 0; fileName.charAt(i) != '.'; i++) {
                     dataOutputStream.write(fileName.charAt(i));
+                    System.out.print(fileName.charAt(i));
+                }
                 dataOutputStream.write(0x0d);
                 dataOutputStream.write(0x03);
             } else {
@@ -107,7 +107,6 @@ class FileReceiver extends Thread{
 
             inputStream.close();
             dataOutputStream.close();
-            outputStream.close();
             socket.close();
 
         } catch (IOException e) {
