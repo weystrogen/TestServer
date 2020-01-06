@@ -13,12 +13,13 @@ public class FOTAServer {
         try{
             serverSocket = new ServerSocket(port);
             System.out.println("Launch Server");
-            socket = serverSocket.accept();
-            System.out.println("Connecting Completed");
+            while (true) {
+                socket = serverSocket.accept();
+                System.out.println("Connecting Completed");
 
-            FileReceiver fl = new FileReceiver(socket);
-            fl.start();
-
+                FileReceiver fl = new FileReceiver(socket);
+                fl.start();
+            }
         }catch (IOException e) {
             e.printStackTrace();
         }
@@ -98,7 +99,7 @@ class FileReceiver extends Thread{
                 response[0] = 0x02;
                 for(i = 0; fileName.charAt(i) != '.'; i++) {
                     response[i + 1] = (byte)fileName.charAt(i);
-                    System.out.print(fileName.charAt(i));
+//                    System.out.print(fileName.charAt(i));
                 }
                 response[i + 1] = 0x0d;
                 response[i + 2] = 0x03;
@@ -108,6 +109,7 @@ class FileReceiver extends Thread{
                 dataOutputStream.write(0x15);
             }
 
+            System.out.println("Socket Close");
             inputStream.close();
             dataOutputStream.close();
             socket.close();
