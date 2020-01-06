@@ -91,6 +91,7 @@ class FileReceiver extends Thread{
             dataOutputStream = new DataOutputStream(socket.getOutputStream());
             dataOutputStream.flush();
 
+            sleep(1000);
             if (isValid) {
                 int i;
                 byte[] response = new byte[20];
@@ -112,6 +113,8 @@ class FileReceiver extends Thread{
             socket.close();
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
